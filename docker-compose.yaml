@@ -1,0 +1,44 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yourusername"]
+      interval: 30s # How often to perform the check (every 30 seconds)
+      timeout: 30s # The time after which the health check times out
+      retries: 5 # Number of times to retry before marking as unhealthy
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+      - "5051:443"
+    depends_on:
+      postgres:
+        condition: service_healthy # PgAdmin starts only when Postgres is healthy
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+
+volumes:
+  pgdata:
+  pgadmin-data:
